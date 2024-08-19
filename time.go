@@ -1,6 +1,7 @@
 package strtime
 
 import (
+	"sort"
 	"time"
 	"unsafe"
 
@@ -11,6 +12,22 @@ import (
 // #include "bsdshim.h"
 // extern int bsd_strptime(const char *s, const char *format, struct mytm *tm);
 import "C"
+
+// StringByLength 实现 sort.Interface 接口
+type StringByLength []string
+
+func (a StringByLength) Len() int {
+	return len(a)
+}
+
+func (a StringByLength) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a StringByLength) Less(i, j int) bool {
+	// 按照长度从大到小排序
+	return len(a[i]) > len(a[j])
+}
 
 // 定义一些常用的日期时间格式
 var defaultLayouts = []string{
@@ -124,6 +141,7 @@ func Strptime(value string, layout string) (time.Time, error) {
 
 	var cTime C.struct_mytm
 	if layout == "" {
+		sort.Sort(StringByLength(defaultLayouts))
 		for _, l := range defaultLayouts {
 			cl := C.CString(l)
 			if r, err := C.bsd_strptime(cValue, cl, &cTime); r != 0 && err == nil {
