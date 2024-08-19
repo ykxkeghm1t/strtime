@@ -20,6 +20,9 @@ func Strptime(value string, layout string) (time.Time, error) {
 	var cTime C.struct_mytm
 
 	if r, err := C.bsd_strptime(cValue, cLayout, &cTime); r == 0 || err != nil {
+		if r == 0 {
+			err = errors.New("")
+		}
 		return time.Time{}, errors.Wrapf(err, "could not parse %s as %s", value, layout)
 	}
 	return time.Date(
